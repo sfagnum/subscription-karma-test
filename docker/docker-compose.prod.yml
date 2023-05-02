@@ -1,0 +1,48 @@
+version: '3.8'
+
+x-env: &env
+  TZ: ${TZ:-Europe/Moscow}
+  WAIT_HOSTS: mysql:3306
+  WAIT_TIMEOUT: 60
+  DB_DSN: ${DB_DSN}
+  DB_USER: ${DB_USER}
+  DB_PASSWORD: ${DB_PASSWORD}
+
+x-app: &app
+  init: true
+  restart: unless-stopped
+  volumes:
+    - ../:/app
+
+services:
+  supervisor:
+    <<: *app
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: supervisor
+    container_name: supervisor-karma-test
+    environment:
+      <<: *env
+      THREADS: ${EMAIL_CHECK_THREADS}
+      MEMORY: ${EMAIL_CHECK_MEMORY}
+      BATCH: ${EMAIL_CHECK_BATCH}
+    depends_on:
+      - mysql
+
+  cron:
+    <<: *app
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: cron
+    container_name: cron-karma-test
+    environment:
+      <<: *env
+      EMAIL_SEND_DELAY: ${EMAIL_SEND_DELAY}
+      EMAIL_SEND_BATCH: ${EMAIL_SEND_BATCH}
+      EMAIL_SEND_MEMORY_LIMIT: ${EMAIL_SEND_MEMORY_LIMIT}
+      EMAIL_SEND_PERIOD: ${EMAIL_SEND_PERIOD}
+      EMAIL_SEND_THREADS: ${EMAIL_SEND_THREADS}
+    depends_on:
+      - mysql

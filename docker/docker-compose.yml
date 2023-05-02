@@ -1,0 +1,44 @@
+version: '3.8'
+
+x-env: &env
+  TZ: ${TZ:-Europe/Moscow}
+  WAIT_HOSTS: mysql:3306
+  WAIT_TIMEOUT: 60
+  DB_DSN: ${DB_DSN}
+  DB_USER: ${DB_USER}
+  DB_PASSWORD: ${DB_PASSWORD}
+
+x-app: &app
+  init: true
+  restart: unless-stopped
+  volumes:
+    - ../:/app
+
+services:
+  cli:
+    <<: *app
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: cli
+      args:
+        FIXTURES: ${FIXTURES:-0}
+        FIXTURES_CHECK_EMAIL: ${FIXTURES_CHECK_EMAIL:-0}
+    container_name: cli-karma-test
+    environment:
+      <<: *env
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mariadb:latest
+    restart: unless-stopped
+    volumes:
+      - /tmp/mysql:/var/lib/mysql
+    environment:
+      TZ: ${TZ:-Europe/Moscow}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports: [ "3306:3306" ]
