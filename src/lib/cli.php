@@ -28,7 +28,7 @@ foreach ([SIGTERM, SIGINT, SIGHUP] as $signal) {
 
 $_cli_options = getopt('v::', ['verbose::']);
 
-$_verbose = $_cli_options['v'] ?? $_cli_options['verbose'] ?? getenv('VERBOSE') ?: null;
+$_verbose = $_cli_options['v'] ?? $_cli_options['verbose'] ?? getenv('VERBOSE') ?? null;
 
 function _cli_backtrace(string $function = null): string
 {

@@ -24,27 +24,25 @@ $threads = (int)($options['t'] ?? $options['threads'] ?? getenv('EMAIL_SEND_THRE
 cli_info('Run sending emails: batch[%d], memory_limit[%s], delay[%d], period[%d]', $batch, $memory_limit, $delay, $period);
 $memory_limit = cli_convert_to_bytes($memory_limit);
 
-$work = static function () use ($memory_limit, $delay, $batch, $period) {
-    while(cli_run($memory_limit, $delay)) {
-        foreach (get_users($batch, $period) as $users) {
-            $valid_emails = db_select(
-                'emails',
-                ['email'],
-                'email IN (:emails) AND valid = 1',
-                [':emails' => array_column($users, 'email')]
-            )->fetchAll(PDO::FETCH_COLUMN);
+$work = static function () use ($batch, $period) {
+    foreach (get_users($batch, $period) as $users) {
+        $valid_emails = db_select(
+            'emails',
+            ['email'],
+            'email IN (:emails) AND valid = 1',
+            [':emails' => array_column($users, 'email')]
+        )->fetchAll(PDO::FETCH_COLUMN);
 
-            $valid_emails = array_flip($valid_emails);
+        $valid_emails = array_flip($valid_emails);
 
-            cli_info('send to (%d) valid emails', count($valid_emails));
+        cli_info('send to (%d) valid emails', count($valid_emails));
 
-            yield array_filter($users, static function ($user) use ($valid_emails) {
-                return isset($valid_emails[$user['email']]);
-            });
-        }
-
-        pool_close();
+        yield array_filter($users, static function ($user) use ($valid_emails) {
+            return isset($valid_emails[$user['email']]);
+        });
     }
+
+    pool_close();
 };
 
 $template = static fn (array $user): string => sprintf(
@@ -72,13 +70,13 @@ $on_error = static function($message, $payload) {
     cli_warning('payload: %s', var_export($payload, true));
 };
 
-$params = [
+$options = [
     'size' => $threads,
     'memory' => $memory_limit,
     'delay' => $delay,
 ];
 
-pool_run($params, $work, $job, $on_success, $on_success);
+pool_run($options, $work, $job, $on_success, $on_error);
 
 cli_info('Done');
 
