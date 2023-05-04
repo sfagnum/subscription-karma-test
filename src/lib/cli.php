@@ -28,7 +28,7 @@ foreach ([SIGTERM, SIGINT, SIGHUP] as $signal) {
 
 $_cli_options = getopt('v::', ['verbose::']);
 
-$_verbose = $_cli_options['v'] ?? $_cli_options['verbose'] ?? getenv('VERBOSE') ?? null;
+$_verbose = (($_cli_options['v'] ?? $_cli_options['verbose'] ?? null) !== null) || (bool)($_ENV['VERBOSE'] ?? $_SERVER['VERBOSE'] ?? null);
 
 function _cli_backtrace(string $function = null): string
 {
@@ -88,7 +88,7 @@ function cli_debug(string $message, ...$args)
 {
     global $_verbose;
 
-    if ($_verbose !== null) {
+    if ($_verbose) {
         _cli_output($message, _CLI_DEBUG, ...$args);
     }
 }

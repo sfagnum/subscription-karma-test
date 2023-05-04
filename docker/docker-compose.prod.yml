@@ -11,24 +11,37 @@ x-env: &env
 x-app: &app
   init: true
   restart: unless-stopped
-  volumes:
-    - ../:/app
+  logging:
+    options:
+      max-size: "100k"
+      max-file: "1"
 
 services:
-  supervisor:
+  check_email:
     <<: *app
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: supervisor
-    container_name: supervisor-karma-test
+      target: build
     environment:
       <<: *env
-      THREADS: ${EMAIL_CHECK_THREADS}
       MEMORY: ${EMAIL_CHECK_MEMORY}
       BATCH: ${EMAIL_CHECK_BATCH}
+      DELAY: ${EMAIL_CHECK_DELAY}
+      VERBOSE: ${VERBOSE:-0}
     depends_on:
       - mysql
+    command: ["/app/bin/check_email"]
+    deploy:
+      mode: replicated
+      replicas: ${EMAIL_CHECK_THREADS}
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 10M
+        reservations:
+          cpus: '0.25'
+          memory: ${EMAIL_CHECK_MEMORY}
 
   cron:
     <<: *app
@@ -42,7 +55,8 @@ services:
       EMAIL_SEND_DELAY: ${EMAIL_SEND_DELAY}
       EMAIL_SEND_BATCH: ${EMAIL_SEND_BATCH}
       EMAIL_SEND_MEMORY_LIMIT: ${EMAIL_SEND_MEMORY_LIMIT}
-      EMAIL_SEND_PERIOD: ${EMAIL_SEND_PERIOD}
+      EMAIL_SEND_PERIOD_DAYS: ${EMAIL_SEND_PERIOD_DAYS}
       EMAIL_SEND_THREADS: ${EMAIL_SEND_THREADS}
+      VERBOSE: ${VERBOSE:-0}
     depends_on:
       - mysql

@@ -10,9 +10,9 @@ $memory_limit = '128MB';
 
 $options = getopt('d::b::m::', ['delay::', 'batch::', 'memory::']);
 
-$delay = (int)($options['d'] ?? $options['delay'] ?? $delay) * 1000;
-$batch = (int)($options['b'] ?? $options['batch'] ?? $batch);
-$memory_limit = $options['m'] ?? $options['memory'] ?? $memory_limit;
+$delay = (int)($options['d'] ?? $options['delay'] ?? getenv('DELAY') ?: $delay) * 1000;
+$batch = (int)($options['b'] ?? $options['batch'] ?? getenv('BATCH') ?: $batch);
+$memory_limit = $options['m'] ?? $options['memory'] ?? getenv('MEMORY') ?: $memory_limit;
 
 $sql = <<<SQL
 SELECT email FROM emails

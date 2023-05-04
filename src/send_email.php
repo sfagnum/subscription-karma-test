@@ -18,7 +18,7 @@ $options = getopt('d::b::m::p::t::', ['delay::', 'batch::', 'memory::', 'period:
 $delay = (int)($options['d'] ?? $options['delay'] ?? getenv('EMAIL_SEND_DELAY') ?: $delay) * 1000;
 $batch = (int)($options['b'] ?? $options['batch'] ?? getenv('EMAIL_SEND_BATCH') ?: $batch);
 $memory_limit = $options['m'] ?? $options['memory'] ?? getenv('EMAIL_SEND_MEMORY_LIMIT') ?: $memory_limit;
-$period = (int)($options['p'] ?? $options['period'] ?? getenv('EMAIL_SEND_PERIOD') ?: $period) * 24 * 60 * 60;
+$period = (int)($options['p'] ?? $options['period'] ?? getenv('EMAIL_SEND_PERIOD_DAYS') ?: $period) * 24 * 60 * 60;
 $threads = (int)($options['t'] ?? $options['threads'] ?? getenv('EMAIL_SEND_THREADS') ?: $threads);
 
 cli_info('Run sending emails: batch[%d], memory_limit[%s], delay[%d], period[%d]', $batch, $memory_limit, $delay, $period);

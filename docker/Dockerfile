@@ -4,6 +4,7 @@ ARG PHP_VERSION=7.4
 ARG VERSION=${PHP_VERSION}-cli-alpine
 
 FROM mlocati/php-extension-installer:latest AS php_extension_installer
+FROM ghcr.io/ufoscout/docker-compose-wait:latest AS docker_compose_wait
 
 
 FROM php:$VERSION as build
@@ -24,7 +25,7 @@ RUN set -eux; \
         pcntl \
     ;
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /usr/local/bin/wait
+COPY --from=docker_compose_wait --link /wait /usr/local/bin/wait
 RUN chmod +x /usr/local/bin/wait
 
 RUN set -eux; \
@@ -54,19 +55,3 @@ FROM build AS cron
 ADD https://github.com/aptible/supercronic/releases/download/v0.2.1/supercronic-linux-amd64 /usr/local/bin/supersonic
 RUN chmod +x /usr/local/bin/supersonic
 CMD ["supersonic", "/app/cron/crontab"]
-
-
-FROM build AS supervisor
-RUN apk update && \
-  apk add --no-cache supervisor && \
-  rm -rf /var/cache/apk/* \
-    ;
-
-RUN mkdir -p /var/log/supervisord && mkdir -p /etc/supervisor/conf.d
-
-COPY --link docker/supervisor/supervisord.conf /etc/supervisord.conf
-COPY --link docker/supervisor/check-email-worker.conf /etc/supervisor/conf.d/check-email-worker.conf
-
-CMD ["supervisord", "-n", "-c", "/etc/supervisord.conf"]
-
-
